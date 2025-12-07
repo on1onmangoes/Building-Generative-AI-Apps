@@ -1,6 +1,23 @@
 # PodcastSearch-AI
 
-A podcast search and shortlisting application that helps you discover podcasts and integrate them into your Swift app.
+A podcast search and shortlisting application that helps you discover podcasts and integrate them into your Swift app. Includes a curated list of **70 Best Food Podcasts** with full metadata.
+
+## Project Structure
+
+```
+PodcastSearch-AI/
+├── app/                          # Python/Gradio backend
+│   ├── app.py                    # Main Gradio application
+│   └── requirements.txt          # Python dependencies
+├── swift/                        # Swift/iOS implementation
+│   ├── PodcastModels.swift       # Data models (Podcast, Episode, Transcript)
+│   ├── iTunesAPIService.swift    # iTunes Search API service
+│   ├── RSSFeedParser.swift       # RSS feed parser for episodes & transcripts
+│   ├── FoodPodcastsData.swift    # Curated list of 70 food podcasts
+│   ├── PodcastSearchManager.swift # Main manager class
+│   └── PodcastSearchView.swift   # SwiftUI views
+└── README.md
+```
 
 ## Features
 
@@ -335,6 +352,104 @@ Replace the localhost URL with your Hugging Face Space URL:
 
 ```swift
 private let baseURL = "https://your-username-podcast-search.hf.space"
+```
+
+## Complete Swift Implementation
+
+The `swift/` directory contains a complete, production-ready Swift implementation:
+
+### Swift Files
+
+| File | Description |
+|------|-------------|
+| `PodcastModels.swift` | All data models: `Podcast`, `Episode`, `Transcript`, `PodcastShortlist` |
+| `iTunesAPIService.swift` | iTunes Search API integration with async/await |
+| `RSSFeedParser.swift` | XML parser for podcast RSS feeds, extracts episodes and transcripts |
+| `FoodPodcastsData.swift` | Curated list of 70 food podcasts with metadata |
+| `PodcastSearchManager.swift` | Main manager combining all services |
+| `PodcastSearchView.swift` | Complete SwiftUI interface |
+
+### Usage in Your Swift App
+
+1. Copy all files from `swift/` to your Xcode project
+2. Use the `PodcastSearchManager`:
+
+```swift
+import SwiftUI
+
+struct ContentView: View {
+    @StateObject private var manager = PodcastSearchManager()
+
+    var body: some View {
+        PodcastSearchView()
+    }
+}
+
+// Or use programmatically:
+let manager = PodcastSearchManager()
+
+// Search iTunes
+await manager.search(query: "food cooking")
+
+// Get curated food podcasts
+let topRated = manager.getTopRatedFoodPodcasts(limit: 10)
+
+// Get full podcast data with episodes
+if let podcast = manager.searchResults.first {
+    let fullData = await manager.getFullPodcastData(for: podcast)
+
+    // Export as JSON for integration
+    let json = fullData.toJSON()
+}
+
+// Manage shortlist
+manager.addToShortlist(podcast)
+let shortlistJSON = manager.exportShortlistAsJSON()
+```
+
+### Transcript Support
+
+The RSS parser supports the `<podcast:transcript>` tag (Apple Podcasts specification):
+
+```swift
+// Get episodes with transcripts
+let episodes = await manager.fetchEpisodesWithTranscripts(for: podcast)
+
+// Fetch transcript content
+if let episode = episodes.first {
+    let transcript = await manager.fetchTranscript(for: episode)
+    print(transcript?.fullText ?? "No transcript")
+}
+```
+
+**Note:** Transcripts are only available if the podcast publisher includes them in their RSS feed using the `<podcast:transcript>` tag. Not all podcasts have transcripts available.
+
+## Food Podcasts List
+
+The app includes a curated list of 70 top food podcasts with:
+- Name, hosts, producer
+- Apple rating and review count
+- Average episode length
+- Format (Short/Medium/Long form)
+- Description
+
+Access via `FoodPodcastsData`:
+
+```swift
+// All podcasts
+let all = FoodPodcastsData.allPodcasts
+
+// Top rated
+let topRated = FoodPodcastsData.topRated(limit: 10)
+
+// Most reviewed
+let popular = FoodPodcastsData.mostReviewed(limit: 10)
+
+// Search
+let results = FoodPodcastsData.search(query: "Gastropod")
+
+// Filter by format
+let longForm = FoodPodcastsData.podcasts(format: "Long form")
 ```
 
 ## License
